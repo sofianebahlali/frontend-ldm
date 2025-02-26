@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 
 // Pages
+import PremiumLandingPage from './pages/PremiumLandingPage'
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -62,7 +63,7 @@ function App() {
     <Router>
       <Routes>
         {/* Marketing/Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<PremiumLandingPage />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
