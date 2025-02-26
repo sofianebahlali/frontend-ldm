@@ -146,13 +146,13 @@ const PremiumLandingPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                  {/* <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
                     <span className="relative flex h-2 w-2 mr-2">
                       <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
                       <span className="relative rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
                     Nouveau • Version 2.0 disponible
-                  </span>
+                  </span> */}
                 </motion.div>
                 
                 <motion.h1
@@ -355,7 +355,7 @@ const PremiumLandingPage = () => {
             </div>
           </section>
 
-          {/* Testimonials */}
+          {/* Testimonials
           <section id="testimonials" className="py-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center">
@@ -414,7 +414,7 @@ const PremiumLandingPage = () => {
                 ))}
               </div>
             </div>
-          </section>
+          </section> */}
 
           {/* Pricing Section */}
           <section id="pricing" className="py-24 bg-gray-50 dark:bg-gray-900">
