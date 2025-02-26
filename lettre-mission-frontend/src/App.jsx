@@ -1,23 +1,22 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-// Layouts
-import Layout from './components/Layout';
-
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
+import ClientList from './pages/ClientList';
+import ClientForm from './pages/ClientForm';
+import GenerateLDM from './pages/GenerateLDM';
+import CabinetSettings from './pages/CabinetSettings';
+import Contact from './pages/Contact';
 
-// Pages à créer plus tard
-const ClientList = () => <div>Liste des clients</div>;
-const ClientForm = () => <div>Formulaire client</div>;
-const GenerateLDM = () => <div>Génération de lettre de mission</div>;
-const CabinetSettings = () => <div>Paramètres du cabinet</div>;
+// Layouts
+import DashboardLayout from './layouts/DashboardLayout';
 
-// Composant qui vérifie si l'utilisateur est connecté
+// Protected route component
 const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
   
@@ -28,22 +27,33 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Premium content protection
+const PremiumRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  
+  if (!user?.isPremium) {
+    return <Navigate to="/settings/payment" replace />;
+  }
+  
+  return children;
+};
+
 function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simuler un chargement initial
+    // Simulate initial loading
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1000);
+    }, 500);
     
     return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -51,52 +61,82 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Routes publiques */}
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          
-          {/* Routes protégées */}
-          <Route path="dashboard" element={
-            <ProtectedRoute>
+        {/* Marketing/Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* Dashboard Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <Dashboard />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="clients" element={
-            <ProtectedRoute>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        {/* Client Routes */}
+        <Route path="/clients" element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <ClientList />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="clients/add" element={
-            <ProtectedRoute>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/clients/add" element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <ClientForm />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="clients/edit/:id" element={
-            <ProtectedRoute>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/clients/edit/:id" element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <ClientForm />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="generate-ldm" element={
-            <ProtectedRoute>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        {/* Letter Generation Route (Premium) */}
+        <Route path="/generate-ldm" element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <GenerateLDM />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="settings/cabinet" element={
-            <ProtectedRoute>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        {/* Settings Routes */}
+        <Route path="/settings/cabinet" element={
+          <ProtectedRoute>
+            <DashboardLayout>
               <CabinetSettings />
-            </ProtectedRoute>
-          } />
-          
-          {/* Route 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Route>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/settings/payment" element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <div className="py-6">
+                <h1 className="text-2xl font-bold mb-4">Abonnement Premium</h1>
+                <div className="bg-white shadow rounded-lg p-6">
+                  <p className="mb-4">Passez à l'abonnement premium pour accéder à toutes les fonctionnalités.</p>
+                  <button className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors">
+                    Passer à l'abonnement premium
+                  </button>
+                </div>
+              </div>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        
+        {/* 404 Route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
