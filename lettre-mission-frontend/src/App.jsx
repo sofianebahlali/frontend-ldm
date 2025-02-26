@@ -53,8 +53,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
+        <div className="w-12 h-12 border-4 border-black border-t-transparent dark:border-white dark:border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -62,7 +62,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Marketing/Public Routes */}
+        {/* Marketing/Public Routes - Utilisez PremiumLandingPage en tant que page d'accueil */}
         <Route path="/" element={<PremiumLandingPage />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />

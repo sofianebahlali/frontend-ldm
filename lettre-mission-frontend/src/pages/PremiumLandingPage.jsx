@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
 
 const PremiumLandingPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -7,6 +8,7 @@ const PremiumLandingPage = () => {
   const [activeTab, setActiveTab] = useState('monthly');
   const [activeFaq, setActiveFaq] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
 
   // Effect for dark mode preference
   useEffect(() => {
@@ -33,6 +35,11 @@ const PremiumLandingPage = () => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
+  // Navigate to dashboard on login
+  const handleGetStarted = () => {
+    navigate('/register');
+  };
+
   return (
     <div className={`min-h-screen font-sans ${darkMode ? 'dark' : ''}`}>
       <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
@@ -51,12 +58,12 @@ const PremiumLandingPage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 md:h-20">
               <div className="flex items-center space-x-4">
-                <a href="#" className="flex items-center space-x-2">
+                <Link to="/" className="flex items-center space-x-2">
                   <div className="h-8 w-8 rounded-lg bg-black dark:bg-white flex items-center justify-center">
                     <span className="text-white dark:text-black font-bold">LM</span>
                   </div>
                   <span className="text-xl font-semibold">LDM</span>
-                </a>
+                </Link>
                 <nav className="hidden md:flex items-center space-x-8">
                   <a href="#features" className="text-sm text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200">Fonctionnalités</a>
                   <a href="#testimonials" className="text-sm text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors duration-200">Témoignages</a>
@@ -81,13 +88,13 @@ const PremiumLandingPage = () => {
                   )}
                 </button>
                 <div className="hidden md:flex items-center space-x-4">
-                  <a href="#" className="text-sm font-medium hover:text-black dark:hover:text-white transition-colors duration-200">Se connecter</a>
-                  <a
-                    href="#"
+                  <Link to="/login" className="text-sm font-medium hover:text-black dark:hover:text-white transition-colors duration-200">Se connecter</Link>
+                  <Link
+                    to="/register"
                     className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     Démarrer gratuitement
-                  </a>
+                  </Link>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -124,10 +131,10 @@ const PremiumLandingPage = () => {
                   <a href="#pricing" className="block px-3 py-2 text-base font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">Tarifs</a>
                   <a href="#faq" className="block px-3 py-2 text-base font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">FAQ</a>
                   <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-800">
-                    <a href="#" className="block px-3 py-2 text-base font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">Se connecter</a>
-                    <a href="#" className="mt-2 block px-3 py-2 text-base font-medium text-center rounded-md bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200">
+                    <Link to="/login" className="block px-3 py-2 text-base font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">Se connecter</Link>
+                    <Link to="/register" className="mt-2 block px-3 py-2 text-base font-medium text-center rounded-md bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200">
                       Démarrer gratuitement
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -141,20 +148,6 @@ const PremiumLandingPage = () => {
           <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               <div className="text-center max-w-3xl mx-auto">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {/* <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                    <span className="relative flex h-2 w-2 mr-2">
-                      <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    Nouveau • Version 2.0 disponible
-                  </span> */}
-                </motion.div>
-                
                 <motion.h1
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -182,14 +175,14 @@ const PremiumLandingPage = () => {
                   transition={{ duration: 0.5, delay: 0.4 }}
                   className="mt-10 flex flex-col sm:flex-row justify-center gap-4"
                 >
-                  <a
-                    href="#"
+                  <Link
+                    to="/register"
                     className="px-8 py-3 text-base font-medium rounded-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-200 shadow-lg hover:shadow-xl"
                   >
                     Démarrer gratuitement
-                  </a>
+                  </Link>
                   <a
-                    href="#"
+                    href="#features"
                     className="px-8 py-3 text-base font-medium rounded-full border border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 transition-colors duration-200"
                   >
                     Voir la démo
@@ -677,18 +670,18 @@ const PremiumLandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="mt-8 flex flex-col sm:flex-row justify-center gap-4"
               >
-                <a
-                  href="#"
+                <Link
+                  to="/register"
                   className="px-8 py-3 text-base font-medium rounded-full bg-white dark:bg-black text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 transition-all duration-200"
                 >
                   Démarrer gratuitement
-                </a>
-                <a
-                  href="#"
+                </Link>
+                <Link
+                  to="/contact"
                   className="px-8 py-3 text-base font-medium rounded-full border border-gray-600 dark:border-gray-300 hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200"
                 >
                   Nous contacter
-                </a>
+                </Link>
               </motion.div>
             </div>
           </section>
@@ -807,15 +800,15 @@ const PremiumLandingPage = () => {
                 &copy; {new Date().getFullYear()} LDM. Tous droits réservés.
               </p>
               <div className="mt-4 md:mt-0 flex space-x-6">
-                <a href="#" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
+              <Link to="/privacy" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
                   Confidentialité
-                </a>
-                <a href="#" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
+                </Link>
+                <Link to="/terms" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
                   Conditions
-                </a>
-                <a href="#" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
+                </Link>
+                <Link to="/cookies" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">
                   Cookies
-                </a>
+                </Link>
               </div>
             </div>
           </div>
