@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
 // Pages
@@ -13,6 +13,7 @@ import ClientForm from './pages/ClientForm';
 import GenerateLDM from './pages/GenerateLDM';
 import CabinetSettings from './pages/CabinetSettings';
 import Contact from './pages/Contact';
+import SubscriptionPage from './pages/SubscriptionPage'; // Nouvelle page d'abonnement
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -43,6 +44,19 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Charger le script Stripe
+    const loadStripe = async () => {
+      if (!window.Stripe && document.getElementById('stripe-js') === null) {
+        const script = document.createElement('script');
+        script.id = 'stripe-js';
+        script.src = 'https://js.stripe.com/v3/';
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    };
+
+    loadStripe();
+
     // Simulate initial loading
     const timer = setTimeout(() => {
       setLoading(false);
@@ -68,6 +82,21 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/success" element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <div className="py-6">
+                <h1 className="text-2xl font-bold mb-4">Abonnement activé avec succès!</h1>
+                <div className="bg-white shadow rounded-lg p-6">
+                  <p className="mb-4">Félicitations! Votre abonnement premium est maintenant actif. Vous pouvez profiter de toutes les fonctionnalités premium.</p>
+                  <Link to="/dashboard" className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors">
+                    Retour au tableau de bord
+                  </Link>
+                </div>
+              </div>
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
         
         {/* Dashboard Routes */}
         <Route path="/dashboard" element={
@@ -124,15 +153,7 @@ function App() {
         <Route path="/settings/payment" element={
           <ProtectedRoute>
             <DashboardLayout>
-              <div className="py-6">
-                <h1 className="text-2xl font-bold mb-4">Abonnement Premium</h1>
-                <div className="bg-white shadow rounded-lg p-6">
-                  <p className="mb-4">Passez à l'abonnement premium pour accéder à toutes les fonctionnalités.</p>
-                  <button className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors">
-                    Passer à l'abonnement premium
-                  </button>
-                </div>
-              </div>
+              <SubscriptionPage />
             </DashboardLayout>
           </ProtectedRoute>
         } />

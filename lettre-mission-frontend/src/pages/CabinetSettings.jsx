@@ -21,7 +21,7 @@ const CabinetSettings = () => {
   useEffect(() => {
     const fetchCabinetData = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/cabinet`, {
+        const response = await fetch(`${BACKEND_URL}/mon-cabinet`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
