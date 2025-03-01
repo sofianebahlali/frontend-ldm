@@ -14,8 +14,8 @@ async function fetchWithAuth(url, options = {}) {
   });
 
   if (!response.ok) {
-    // Si erreur 401, rediriger vers login
-    if (response.status === 401) {
+    // Ne redirigez vers login que si nous ne sommes pas déjà sur la route de login
+    if (response.status === 401 && !url.includes('/login')) {
       localStorage.removeItem('user');
       window.location.href = '/login';
       throw new Error('Session expirée, veuillez vous reconnecter');
@@ -49,20 +49,26 @@ export const authService = {
   },
 
   // Connexion
+  // Connexion
   async login(username, password) {
-    const data = await fetchWithAuth('/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    });
-    
-    if (data) {
-      localStorage.setItem('user', JSON.stringify({ 
-        username, 
-        isPremium: data.is_premium 
-      }));
+    try {
+      const data = await fetchWithAuth('/login', {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      });
+      
+      if (data) {
+        localStorage.setItem('user', JSON.stringify({ 
+          username, 
+          isPremium: data.is_premium 
+        }));
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Erreur de connexion:', error.message);
+      throw error; // Propager l'erreur pour qu'elle soit gérée par le composant
     }
-    
-    return data;
   },
 
   // Déconnexion

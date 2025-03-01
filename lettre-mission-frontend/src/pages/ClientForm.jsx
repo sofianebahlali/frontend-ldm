@@ -1,33 +1,259 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const ClientForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
-  
+  const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+  // État pour le formulaire
+  const [formValues, setFormValues] = useState({
+    denom_social: "",
+    Nom_representantclient: "",
+    Forme_client: "",
+    Impot_client: "",
+    Tva_client: false,
+    Siren_client: "",
+    Activite_client: "",
+    Adresse_etablissementclient: "",
+    code_postaletablissementclient: "",
+    ville_etablissementclient: "",
+    date_debutexercice: "",
+    date_finexercice: "",
+    Nom_expertdossier: ""
+  });
+
+  // États pour gérer le chargement et les erreurs
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(isEditMode);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
+
+  // Si on est en mode édition, charger les données du client
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchClient = async () => {
+        try {
+          // Afficher les informations pour debug
+          console.log(`Tentative de récupération du client avec l'ID: ${id}`);
+          console.log(`URL de l'API: ${BACKEND_URL}/clients/${id}`);
+          
+          // Essai avec un gestionnaire d'erreur plus détaillé
+          const response = await fetch(`${BACKEND_URL}/clients/${id}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include'
+          });
+          
+          // Vérifier et afficher le statut de la réponse
+          console.log(`Statut de la réponse: ${response.status}`);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Réponse d\'erreur:', errorText);
+            throw new Error(`Erreur ${response.status}: ${errorText || response.statusText}`);
+          }
+          
+          const clientData = await response.json();
+          console.log('Données client reçues:', clientData);
+          
+          // Formater les dates
+          const formatDate = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0]; // Format YYYY-MM-DD
+          };
+          
+          setFormValues({
+            ...clientData,
+            date_debutexercice: formatDate(clientData.date_debutexercice),
+            date_finexercice: formatDate(clientData.date_finexercice),
+            // Assurer que Tva_client est un booléen
+            Tva_client: Boolean(clientData.Tva_client)
+          });
+          
+        } catch (err) {
+          console.error('Erreur détaillée lors du chargement du client:', err);
+          setError(`Impossible de charger les données du client: ${err.message}`);
+        } finally {
+          setInitialLoading(false);
+        }
+      };
+      
+      fetchClient();
+    } else {
+      // S'assurer que initialLoading est mis à false même en mode création
+      setInitialLoading(false);
+    }
+  }, [BACKEND_URL, id, isEditMode]);
+
+  // Effet pour faire disparaître le message de succès après quelques secondes
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  // Gérer les changements de champs
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormValues(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  // Fonction pour procéder à la soumission
+  const proceedToSubmit = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const method = isEditMode ? 'PUT' : 'POST';
+      const url = isEditMode
+        ? `${BACKEND_URL}/clients/${id}`
+        : `${BACKEND_URL}/clients`;
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(formValues)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la soumission');
+      }
+      
+      const savedClient = await response.json();
+      
+      // Afficher le message de succès
+      setSuccess({
+        message: isEditMode 
+          ? `Le client "${savedClient.denom_social}" a été modifié avec succès` 
+          : `Le client "${savedClient.denom_social}" a été ajouté avec succès`,
+        type: 'success'
+      });
+      
+      // Rediriger après un court délai si c'est un nouvel ajout
+      if (!isEditMode) {
+        setTimeout(() => {
+          navigate('/clients');
+        }, 2000);
+      }
+      
+    } catch (err) {
+      console.error('Erreur lors de la soumission:', err);
+      setError(err.message || 'Une erreur est survenue lors de la soumission.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Vérifier les champs avant soumission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Vérifier si des champs essentiels sont vides
+    const requiredFields = ['denom_social'];
+    const emptyRequiredFields = requiredFields.filter(field => !formValues[field]);
+    
+    if (emptyRequiredFields.length > 0) {
+      setError('Veuillez remplir au moins la dénomination sociale');
+      return;
+    }
+    
+    // Vérifier si des champs non-essentiels sont vides
+    const emptyFields = Object.entries(formValues)
+      .filter(([key, value]) => key !== 'id' && !value && !requiredFields.includes(key));
+    
+    if (emptyFields.length > 0) {
+      setShowIncompleteModal(true);
+    } else {
+      proceedToSubmit();
+    }
+  };
+
+  if (initialLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="py-6">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           {isEditMode ? 'Modifier le client' : 'Ajouter un client'}
         </h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           {isEditMode 
             ? 'Modifiez les informations du client' 
             : 'Ajoutez un nouveau client à votre portefeuille'}
         </p>
       </header>
+
+      {/* Message de succès */}
+      {success && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="mb-6 rounded-md bg-green-50 dark:bg-green-900/30 p-4"
+        >
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                {success.message}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Message d'erreur */}
+      {error && (
+        <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
       
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+      {/* Formulaire */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-4 py-5 sm:p-6">
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Informations de base */}
             <div>
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Informations générales</h3>
+              <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Informations générales</h3>
               <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div className="sm:col-span-3">
-                  <label htmlFor="denom_social" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="denom_social" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Dénomination sociale *
                   </label>
                   <div className="mt-1">
@@ -35,54 +261,322 @@ const ClientForm = () => {
                       type="text"
                       name="denom_social"
                       id="denom_social"
-                      className="shadow-sm focus:ring-black focus:border-black block w-full sm:text-sm border-gray-300 rounded-md"
+                      value={formValues.denom_social}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                      required
                     />
                   </div>
                 </div>
                 
                 <div className="sm:col-span-3">
-                  <label htmlFor="Forme_client" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="Forme_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Forme juridique
                   </label>
                   <div className="mt-1">
                     <select
                       id="Forme_client"
                       name="Forme_client"
-                      className="shadow-sm focus:ring-black focus:border-black block w-full sm:text-sm border-gray-300 rounded-md"
+                      value={formValues.Forme_client}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                     >
                       <option value="">Sélectionner</option>
                       <option value="SARL">SARL</option>
                       <option value="SAS">SAS</option>
+                      <option value="SASU">SASU</option>
                       <option value="EURL">EURL</option>
                       <option value="SA">SA</option>
                       <option value="SCI">SCI</option>
                       <option value="EI">EI</option>
+                      <option value="Autre">Autre</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label htmlFor="Nom_representantclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Représentant(s)
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="Nom_representantclient"
+                      id="Nom_representantclient"
+                      value={formValues.Nom_representantclient}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label htmlFor="Impot_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Type d'impôt
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="Impot_client"
+                      name="Impot_client"
+                      value={formValues.Impot_client}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    >
+                      <option value="">Sélectionner</option>
+                      <option value="Impôt sur le revenu">Impôt sur le revenu</option>
+                      <option value="Impôt sur les sociétés">Impôt sur les sociétés</option>
+                      <option value="Non soumis à impôt">Non soumis à impôt</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label htmlFor="Siren_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    SIREN
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="Siren_client"
+                      id="Siren_client"
+                      value={formValues.Siren_client}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <div className="flex items-center mt-5">
+                    <input
+                      id="Tva_client"
+                      name="Tva_client"
+                      type="checkbox"
+                      checked={formValues.Tva_client}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-black dark:text-white focus:ring-black dark:focus:ring-white border-gray-300 dark:border-gray-600 rounded"
+                    />
+                    <label htmlFor="Tva_client" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                      Assujetti à la TVA
+                    </label>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-6">
+                  <label htmlFor="Activite_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Activité
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="Activite_client"
+                      id="Activite_client"
+                      value={formValues.Activite_client}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="pt-5">
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => navigate('/clients')}
-                  className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                >
-                  {isEditMode ? 'Enregistrer les modifications' : 'Créer le client'}
-                </button>
+            {/* Adresse */}
+            <div className="pt-8">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Adresse de l'établissement</h3>
+              <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <div className="sm:col-span-6">
+                  <label htmlFor="Adresse_etablissementclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Adresse
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="Adresse_etablissementclient"
+                      id="Adresse_etablissementclient"
+                      value={formValues.Adresse_etablissementclient}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="code_postaletablissementclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Code postal
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="code_postaletablissementclient"
+                      id="code_postaletablissementclient"
+                      value={formValues.code_postaletablissementclient}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-4">
+                  <label htmlFor="ville_etablissementclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Ville
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="ville_etablissementclient"
+                      id="ville_etablissementclient"
+                      value={formValues.ville_etablissementclient}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
+            
+            {/* Exercice comptable */}
+            <div className="pt-8">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Exercice comptable</h3>
+              <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <div className="sm:col-span-3">
+                  <label htmlFor="date_debutexercice" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Date de début d'exercice
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="date"
+                      name="date_debutexercice"
+                      id="date_debutexercice"
+                      value={formValues.date_debutexercice}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label htmlFor="date_finexercice" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Date de fin d'exercice
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="date"
+                      name="date_finexercice"
+                      id="date_finexercice"
+                      value={formValues.date_finexercice}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Informations complémentaires */}
+            <div className="pt-8">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Informations complémentaires</h3>
+              <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                <div className="sm:col-span-6">
+                  <label htmlFor="Nom_expertdossier" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Nom de l'expert en charge du dossier
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      name="Nom_expertdossier"
+                      id="Nom_expertdossier"
+                      value={formValues.Nom_expertdossier}
+                      onChange={handleChange}
+                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Boutons d'action */}
+            <div className="pt-5 flex justify-end">
+              <Link
+                to="/clients"
+                className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white"
+              >
+                Annuler
+              </Link>
+              <button
+                type="submit"
+                disabled={loading}
+                className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white dark:text-black bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white dark:text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Traitement en cours...
+                  </>
+                ) : (
+                  isEditMode ? 'Enregistrer les modifications' : 'Créer le client'
+                )}
+              </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Modal de confirmation pour les champs manquants */}
+      {showIncompleteModal && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
+            </div>
+
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg className="h-6 w-6 text-yellow-600 dark:text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                      Informations incomplètes
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Certains champs n'ont pas été remplis. Souhaitez-vous quand même continuer et enregistrer ce client avec les informations partielles ?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-black dark:bg-white text-base font-medium text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => {
+                    setShowIncompleteModal(false);
+                    proceedToSubmit();
+                  }}
+                >
+                  Continuer
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => setShowIncompleteModal(false)}
+                >
+                  Revenir au formulaire
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

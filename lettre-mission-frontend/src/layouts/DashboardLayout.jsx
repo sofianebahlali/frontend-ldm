@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { themeService } from '../services/themeService';
 
 // Composant pour les icônes
 const Icon = ({ children, className = "" }) => {
@@ -62,29 +63,17 @@ const DashboardLayout = ({ children }) => {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
-  // Check for dark mode preference
+  // Initialisation du thème avec le service
   useEffect(() => {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(prefersDark);
-    
-    // Add appropriate class to document
-    if (prefersDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Utiliser le service de thème pour initialiser
+    const isDarkMode = themeService.initTheme();
+    setDarkMode(isDarkMode);
   }, []);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    
-    // Toggle dark class on document
-    if (!darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const newDarkMode = themeService.toggleTheme();
+    setDarkMode(newDarkMode);
   };
 
   const handleLogout = () => {

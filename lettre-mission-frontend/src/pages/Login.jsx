@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authService } from '../services/api';
+import { themeService } from '../services/themeService';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -12,14 +13,18 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check for dark mode preference
+  // Initialisation du thème avec le service
   useEffect(() => {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(prefersDark);
+    // Utiliser le service de thème pour initialiser
+    const isDarkMode = themeService.initTheme();
+    setDarkMode(isDarkMode);
   }, []);
 
   // Toggle dark mode
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  const toggleDarkMode = () => {
+    const newDarkMode = themeService.toggleTheme();
+    setDarkMode(newDarkMode);
+  };
 
   // Check if user just registered
   useEffect(() => {

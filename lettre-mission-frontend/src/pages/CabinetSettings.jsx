@@ -11,23 +11,65 @@ const CabinetSettings = () => {
   });
   
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
   
-  // Effet de chargement des données (simulation)
+  const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  
+  // Effet pour charger les données existantes du cabinet
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Simuler le chargement de données existantes
-      setFormData({
-        Denom_socialexpert: 'Cabinet Comptable LDM',
-        Siret_expert: '12345678900012',
-        Adresse_expert: '123 Avenue de la Comptabilité\n75008 Paris',
-        Tel_expert: '01 23 45 67 89',
-        Mail_expert: 'contact@cabinet-ldm.fr'
-      });
-    }, 500);
+    const fetchCabinetData = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/cabinet`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.log('Erreur lors de la récupération des données du cabinet:', response.status);
+          // S'il n'y a pas de données, ce n'est pas une erreur grave
+          if (response.status !== 404) {
+            throw new Error('Impossible de récupérer les données du cabinet');
+          }
+        } else {
+          // Récupération réussie
+          const cabinetData = await response.json();
+          console.log('Données cabinet reçues:', cabinetData);
+          
+          // Mise à jour du formulaire avec les données existantes
+          setFormData({
+            Denom_socialexpert: cabinetData.Denom_socialexpert || '',
+            Siret_expert: cabinetData.Siret_expert || '',
+            Adresse_expert: cabinetData.Adresse_expert || '',
+            Tel_expert: cabinetData.Tel_expert || '',
+            Mail_expert: cabinetData.Mail_expert || ''
+          });
+        }
+      } catch (err) {
+        console.error('Erreur détaillée:', err);
+        setError('Impossible de charger les données du cabinet. Veuillez réessayer plus tard.');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    fetchCabinetData();
+  }, [BACKEND_URL]);
+  
+  // Effet pour faire disparaître le message de succès après quelques secondes
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,19 +79,69 @@ const CabinetSettings = () => {
     }));
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
-    // Simuler une sauvegarde
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      console.log('Envoi des données:', formData);
+      
+      const response = await fetch(`${BACKEND_URL}/cabinet`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+      
+      // Vérifier la réponse
+      console.log('Statut de la réponse:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Réponse d\'erreur:', errorText);
+        throw new Error(`Erreur ${response.status}: ${errorText || response.statusText}`);
+      }
+      
+      // Sauvegarde réussie
       setSuccess(true);
       
-      // Réinitialiser le message de succès après 3 secondes
-      setTimeout(() => setSuccess(false), 3000);
-    }, 800);
+      // Recharger les données pour confirmer la sauvegarde
+      const updatedDataResponse = await fetch(`${BACKEND_URL}/cabinet`, {
+        credentials: 'include'
+      });
+      
+      if (updatedDataResponse.ok) {
+        const updatedData = await updatedDataResponse.json();
+        console.log('Données mises à jour reçues après sauvegarde:', updatedData);
+        
+        // Vérifier si les données ont bien été enregistrées
+        setFormData({
+          Denom_socialexpert: updatedData.Denom_socialexpert || '',
+          Siret_expert: updatedData.Siret_expert || '',
+          Adresse_expert: updatedData.Adresse_expert || '',
+          Tel_expert: updatedData.Tel_expert || '',
+          Mail_expert: updatedData.Mail_expert || ''
+        });
+      }
+    } catch (err) {
+      console.error('Erreur lors de la sauvegarde:', err);
+      setError(`Erreur lors de la sauvegarde des informations. ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -67,6 +159,7 @@ const CabinetSettings = () => {
         
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="px-4 py-5 sm:p-6">
+            {/* Message de succès */}
             {success && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -86,6 +179,22 @@ const CabinetSettings = () => {
                   </div>
                 </div>
               </motion.div>
+            )}
+            
+            {/* Message d'erreur */}
+            {error && (
+              <div className="mb-6 rounded-md bg-red-50 dark:bg-red-900/30 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
+                  </div>
+                </div>
+              </div>
             )}
             
             <form className="space-y-8" onSubmit={handleSubmit}>
@@ -187,6 +296,7 @@ const CabinetSettings = () => {
                   <button
                     type="button"
                     className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black dark:focus:ring-white"
+                    onClick={() => window.location.reload()} // Recharger la page pour annuler
                   >
                     Annuler
                   </button>

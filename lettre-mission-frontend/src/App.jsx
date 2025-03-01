@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 // Pages
 import PremiumLandingPage from './pages/PremiumLandingPage'
-import Home from './pages/Home';
+import CorsTester from './pages/CorsTester';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -64,6 +64,7 @@ function App() {
       <Routes>
         {/* Marketing/Public Routes - Utilisez PremiumLandingPage en tant que page d'accueil */}
         <Route path="/" element={<PremiumLandingPage />} />
+        <Route path="/cors-test" element={<CorsTester />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
