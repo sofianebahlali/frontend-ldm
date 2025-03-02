@@ -1,4 +1,4 @@
-// Service API simplifié pour communiquer avec le backend Flask
+// Service API amélioré pour communiquer avec le backend Flask
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -7,18 +7,36 @@ async function fetchWithAuth(url, options = {}) {
   console.log(`Fetching ${API_URL}${url} with options:`, options);
   
   try {
+    // Assurer que le Content-Type est défini pour les requêtes avec body
+    const headers = {
+      'Accept': 'application/json',
+      ...options.headers,
+    };
+    
+    // Ajouter Content-Type uniquement s'il y a un body (pour éviter des problèmes avec les requêtes GET)
+    if (options.method && options.method !== 'GET' && options.body) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await fetch(`${API_URL}${url}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       credentials: 'include', // Important pour les cookies de session
     });
 
     console.log(`Response status for ${url}:`, response.status);
 
     if (!response.ok) {
+      // Essayer de récupérer plus d'informations sur l'erreur
+      let errorMessage;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || `Erreur ${response.status}: ${response.statusText}`;
+      } catch (e) {
+        // Si on ne peut pas parser la réponse comme JSON
+        errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+      }
+      
       // Ne redirigez vers login que si nous ne sommes pas déjà sur la route de login
       if (response.status === 401 && !url.includes('/login')) {
         localStorage.removeItem('user');
@@ -26,16 +44,7 @@ async function fetchWithAuth(url, options = {}) {
         throw new Error('Session expirée, veuillez vous reconnecter');
       }
 
-      // Tenter de récupérer le message d'erreur du backend
-      try {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Une erreur est survenue');
-      } catch (e) {
-        if (e.message && !e.message.includes('Une erreur est survenue')) {
-          throw e; // Rethrow l'erreur de parsing JSON si on a un message utile
-        }
-        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
-      }
+      throw new Error(errorMessage);
     }
 
     // Pour les réponses sans contenu
@@ -106,7 +115,13 @@ export const clientService = {
 
   // Récupérer un client spécifique
   async getClient(id) {
-    return fetchWithAuth(`/clients/${id}`);
+    // S'assurer que l'ID est un nombre
+    const clientId = parseInt(id);
+    if (isNaN(clientId)) {
+      throw new Error('ID client invalide');
+    }
+    
+    return fetchWithAuth(`/clients/${clientId}`);
   },
 
   // Créer un client
@@ -119,19 +134,35 @@ export const clientService = {
 
   // Mettre à jour un client
   async updateClient(id, clientData) {
-    const url = `/clients/${id}`;
-    console.log('Updating client with URL:', url);
+    // S'assurer que l'ID est un nombre
+    const clientId = parseInt(id);
+    if (isNaN(clientId)) {
+      throw new Error('ID client invalide');
+    }
+    
+    console.log(`Updating client with ID: ${clientId}`);
     console.log('Client data:', clientData);
     
-    return fetchWithAuth(url, {
-      method: 'PUT',
-      body: JSON.stringify(clientData),
-    });
+    try {
+      return await fetchWithAuth(`/clients/${clientId}`, {
+        method: 'PUT',
+        body: JSON.stringify(clientData),
+      });
+    } catch (error) {
+      console.error(`Error updating client ${clientId}:`, error);
+      throw error;
+    }
   },
 
   // Supprimer un client
   async deleteClient(id) {
-    return fetchWithAuth(`/clients/${id}`, {
+    // S'assurer que l'ID est un nombre
+    const clientId = parseInt(id);
+    if (isNaN(clientId)) {
+      throw new Error('ID client invalide');
+    }
+    
+    return fetchWithAuth(`/clients/${clientId}`, {
       method: 'DELETE',
     });
   },
@@ -219,6 +250,13 @@ export const stripeService = {
   // Vérifier le statut de l'abonnement
   async checkSubscriptionStatus() {
     return fetchWithAuth('/user-status');
+  },
+  
+  // Annuler l'abonnement (à implémenter côté serveur)
+  async cancelSubscription() {
+    return fetchWithAuth('/cancel-subscription', {
+      method: 'POST',
+    });
   }
 };
 

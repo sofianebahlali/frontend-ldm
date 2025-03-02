@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { cabinetService } from '../services/api';
+import { cgvService } from '../services/api';
 import { formStyles } from '../styles/FormStyles';
 
-const CabinetSettings = () => {
+const CGVSettings = () => {
   const [formData, setFormData] = useState({
-    Denom_socialexpert: '',
-    Siret_expert: '',
-    Adresse_expert: '',
-    Tel_expert: '',
-    Mail_expert: '',
-    Site_expert: '',
-    Region_expert: '',
-    Intracom_expert: ''
+    delais_resiliation: '',
+    delais_interruption: '',
+    Acompte_pourcentage: '',
+    Pourcentage_indemnite: '',
+    Mode_reglement: '',
+    Duree_contestationfacture: '',
+    Ville_tribunal: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -20,35 +19,32 @@ const CabinetSettings = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
   
-  const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  
-  // Effet pour charger les données existantes du cabinet
+  // Effet pour charger les données existantes des CGV
   useEffect(() => {
-    const fetchCabinetData = async () => {
+    const fetchCGVData = async () => {
       try {
-        const response = await cabinetService.getCabinetInfo();
+        const response = await cgvService.getCGVInfo();
         
         if (response) {
           setFormData({
-            Denom_socialexpert: response.Denom_socialexpert || '',
-            Siret_expert: response.Siret_expert || '',
-            Adresse_expert: response.Adresse_expert || '',
-            Tel_expert: response.Tel_expert || '',
-            Mail_expert: response.Mail_expert || '',
-            Site_expert: response.Site_expert || '',
-            Region_expert: response.Region_expert || '',
-            Intracom_expert: response.Intracom_expert || ''
+            delais_resiliation: response.delais_resiliation || '',
+            delais_interruption: response.delais_interruption || '',
+            Acompte_pourcentage: response.Acompte_pourcentage || '',
+            Pourcentage_indemnite: response.Pourcentage_indemnite || '',
+            Mode_reglement: response.Mode_reglement || '',
+            Duree_contestationfacture: response.Duree_contestationfacture || '',
+            Ville_tribunal: response.Ville_tribunal || ''
           });
         }
       } catch (err) {
         console.error('Erreur détaillée:', err);
-        setError('Impossible de charger les données du cabinet. Veuillez réessayer plus tard.');
+        setError('Impossible de charger les données des CGV. Veuillez réessayer plus tard.');
       } finally {
         setInitialLoading(false);
       }
     };
     
-    fetchCabinetData();
+    fetchCGVData();
   }, []);
   
   // Effet pour faire disparaître le message de succès après quelques secondes
@@ -62,10 +58,11 @@ const CabinetSettings = () => {
   }, [success]);
   
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    // Pour les champs numériques, on convertit la valeur en nombre
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'number' ? (value === '' ? '' : parseFloat(value)) : value
     }));
   };
   
@@ -75,11 +72,11 @@ const CabinetSettings = () => {
     setError(null);
     
     try {
-      await cabinetService.updateCabinetInfo(formData);
+      await cgvService.updateCGVInfo(formData);
       setSuccess(true);
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
-      setError(`Erreur lors de la sauvegarde des informations. ${err.message}`);
+      setError(`Erreur lors de la sauvegarde des CGV. ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -95,7 +92,7 @@ const CabinetSettings = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Informations du cabinet</h2>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Conditions Générales de Vente</h2>
       
       {/* Message de succès */}
       {success && (
@@ -112,7 +109,7 @@ const CabinetSettings = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                Les informations du cabinet ont été enregistrées avec succès.
+                Les conditions générales de vente ont été enregistrées avec succès.
               </p>
             </div>
           </div>
@@ -137,125 +134,125 @@ const CabinetSettings = () => {
       
       <form className="space-y-8" onSubmit={handleSubmit}>
         <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-          {/* Informations du cabinet */}
+          {/* Délais */}
           <div className={formStyles.formSection}>
-            <h3 className={formStyles.sectionTitle}>Informations générales</h3>
-            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+            <h3 className={formStyles.sectionTitle}>Délais et pourcentages</h3>
+            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
               <div>
-                <label htmlFor="Denom_socialexpert" className={formStyles.label}>
-                  Dénomination sociale <span className="text-red-500">*</span>
+                <label htmlFor="delais_resiliation" className={formStyles.label}>
+                  Délai de résiliation (jours)
                 </label>
                 <input
-                  type="text"
-                  name="Denom_socialexpert"
-                  id="Denom_socialexpert"
-                  value={formData.Denom_socialexpert}
+                  type="number"
+                  name="delais_resiliation"
+                  id="delais_resiliation"
+                  value={formData.delais_resiliation}
                   onChange={handleChange}
-                  className={formStyles.input}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="Siret_expert" className={formStyles.label}>
-                  Numéro SIRET
-                </label>
-                <input
-                  type="text"
-                  name="Siret_expert"
-                  id="Siret_expert"
-                  value={formData.Siret_expert}
-                  onChange={handleChange}
+                  min="0"
                   className={formStyles.input}
                 />
               </div>
               
-              <div className="sm:col-span-2">
-                <label htmlFor="Adresse_expert" className={formStyles.label}>
-                  Adresse complète
+              <div>
+                <label htmlFor="delais_interruption" className={formStyles.label}>
+                  Délai d'interruption (jours)
                 </label>
-                <textarea
-                  id="Adresse_expert"
-                  name="Adresse_expert"
-                  rows={3}
-                  value={formData.Adresse_expert}
+                <input
+                  type="number"
+                  name="delais_interruption"
+                  id="delais_interruption"
+                  value={formData.delais_interruption}
                   onChange={handleChange}
-                  className={formStyles.textarea}
+                  min="0"
+                  className={formStyles.input}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="Duree_contestationfacture" className={formStyles.label}>
+                  Délai de contestation facture (jours)
+                </label>
+                <input
+                  type="number"
+                  name="Duree_contestationfacture"
+                  id="Duree_contestationfacture"
+                  value={formData.Duree_contestationfacture}
+                  onChange={handleChange}
+                  min="0"
+                  className={formStyles.input}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="Acompte_pourcentage" className={formStyles.label}>
+                  Pourcentage d'acompte (%)
+                </label>
+                <input
+                  type="number"
+                  name="Acompte_pourcentage"
+                  id="Acompte_pourcentage"
+                  value={formData.Acompte_pourcentage}
+                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  className={formStyles.input}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="Pourcentage_indemnite" className={formStyles.label}>
+                  Pourcentage d'indemnité (%)
+                </label>
+                <input
+                  type="number"
+                  name="Pourcentage_indemnite"
+                  id="Pourcentage_indemnite"
+                  value={formData.Pourcentage_indemnite}
+                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  className={formStyles.input}
                 />
               </div>
             </div>
           </div>
           
-          {/* Coordonnées */}
+          {/* Règlement et tribunal */}
           <div className={formStyles.formSection}>
-            <h3 className={formStyles.sectionTitle}>Coordonnées</h3>
+            <h3 className={formStyles.sectionTitle}>Mode de règlement et juridiction</h3>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="Tel_expert" className={formStyles.label}>
-                  Téléphone
+                <label htmlFor="Mode_reglement" className={formStyles.label}>
+                  Mode de règlement
+                </label>
+                <select
+                  name="Mode_reglement"
+                  id="Mode_reglement"
+                  value={formData.Mode_reglement}
+                  onChange={handleChange}
+                  className={formStyles.select}
+                >
+                  <option value="">Sélectionner</option>
+                  <option value="Virement">Virement</option>
+                  <option value="Chèque">Chèque</option>
+                  <option value="Prélèvement">Prélèvement</option>
+                  <option value="Carte bancaire">Carte bancaire</option>
+                  <option value="Espèces">Espèces</option>
+                  <option value="Virement ou chèque">Virement ou chèque</option>
+                </select>
+              </div>
+              
+              <div>
+                <label htmlFor="Ville_tribunal" className={formStyles.label}>
+                  Ville du tribunal compétent
                 </label>
                 <input
                   type="text"
-                  name="Tel_expert"
-                  id="Tel_expert"
-                  value={formData.Tel_expert}
-                  onChange={handleChange}
-                  className={formStyles.input}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="Mail_expert" className={formStyles.label}>
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="Mail_expert"
-                  id="Mail_expert"
-                  value={formData.Mail_expert}
-                  onChange={handleChange}
-                  className={formStyles.input}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="Site_expert" className={formStyles.label}>
-                  Site web
-                </label>
-                <input
-                  type="url"
-                  name="Site_expert"
-                  id="Site_expert"
-                  value={formData.Site_expert}
-                  onChange={handleChange}
-                  className={formStyles.input}
-                  placeholder="https://www.votresite.fr"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="Region_expert" className={formStyles.label}>
-                  Région
-                </label>
-                <input
-                  type="text"
-                  name="Region_expert"
-                  id="Region_expert"
-                  value={formData.Region_expert}
-                  onChange={handleChange}
-                  className={formStyles.input}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="Intracom_expert" className={formStyles.label}>
-                  Numéro TVA intracommunautaire
-                </label>
-                <input
-                  type="text"
-                  name="Intracom_expert"
-                  id="Intracom_expert"
-                  value={formData.Intracom_expert}
+                  name="Ville_tribunal"
+                  id="Ville_tribunal"
+                  value={formData.Ville_tribunal}
                   onChange={handleChange}
                   className={formStyles.input}
                 />
@@ -293,4 +290,4 @@ const CabinetSettings = () => {
   );
 };
 
-export default CabinetSettings;
+export default CGVSettings;

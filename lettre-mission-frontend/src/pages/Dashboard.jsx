@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { clientService } from '../services/api';
+import { profileCompletionService } from '../services/profileCompletionService';
 
 // Composants Dashboard
 import StatCard from '../components/dashboard/StatCard';
@@ -13,7 +14,29 @@ const Dashboard = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [profileCompletion, setProfileCompletion] = useState(
+    profileCompletionService.getCompletion() // Obtenir la valeur stockée ou par défaut
+  );
   const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+  // Calculer la complétion du profil au chargement du composant
+  useEffect(() => {
+    const calculateProfileCompletion = async () => {
+      try {
+        const completion = await profileCompletionService.calculateCompletion({
+          cabinetService,
+          cgvService,
+          clientService
+        });
+        setProfileCompletion(completion);
+      } catch (error) {
+        console.error("Erreur lors du calcul de la complétion du profil:", error);
+      }
+    };
+    
+    calculateProfileCompletion();
+  }, []);
+    
 
   // Simuler des activités récentes
   const recentActivities = [
@@ -138,14 +161,14 @@ const Dashboard = () => {
         
         <StatCard 
           title="Complétude profil" 
-          value="75%" 
+          value={`${profileCompletion}%`}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           }
-          progress={75}
-          linkTo="/settings/cabinet"
+          progress={profileCompletion}
+          linkTo="/user-profile" // Nouveau lien vers la page profil utilisateur
           linkLabel="Compléter mon profil"
         />
         

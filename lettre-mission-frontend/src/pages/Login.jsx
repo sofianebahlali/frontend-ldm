@@ -7,6 +7,7 @@ import { themeService } from '../services/themeService';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false); // État pour la case à cocher
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -19,6 +20,31 @@ const Login = () => {
     const isDarkMode = themeService.initTheme();
     setDarkMode(isDarkMode);
   }, []);
+
+  // Vérifiez si l'utilisateur est déjà connecté (session persistante)
+  useEffect(() => {
+    const checkPersistentLogin = async () => {
+      // Récupérer la session stockée si elle existe
+      const persistentSession = localStorage.getItem('persistentSession');
+      
+      if (persistentSession) {
+        try {
+          // Vérifier si la session est toujours valide
+          const status = await authService.getUserStatus();
+          
+          if (status && status.username) {
+            // Session valide, rediriger vers le dashboard
+            navigate('/dashboard');
+          }
+        } catch (err) {
+          // Session expirée ou invalide, supprimer la session persistante
+          localStorage.removeItem('persistentSession');
+        }
+      }
+    };
+    
+    checkPersistentLogin();
+  }, [navigate]);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -40,7 +66,14 @@ const Login = () => {
     setLoading(true);
     
     try {
-      await authService.login(username, password);
+      // Passer l'état de rememberMe au service d'authentification
+      const result = await authService.login(username, password, rememberMe);
+      
+      // Si l'option "Se souvenir de moi" est cochée, stocker cette information
+      if (rememberMe) {
+        localStorage.setItem('persistentSession', 'true');
+      }
+      
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Une erreur est survenue lors de la connexion.');
