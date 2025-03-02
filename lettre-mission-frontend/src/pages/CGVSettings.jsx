@@ -18,6 +18,7 @@ const CGVSettings = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [isNewUser, setIsNewUser] = useState(false);
   
   // Effet pour charger les données existantes des CGV
   useEffect(() => {
@@ -25,7 +26,18 @@ const CGVSettings = () => {
       try {
         const response = await cgvService.getCGVInfo();
         
+        // Si nous avons reçu des données, les utiliser
         if (response) {
+          // Vérifier si les données sont vides (nouvel utilisateur)
+          const hasData = Object.values(response).some(value => 
+            value !== null && value !== undefined && String(value).trim() !== ''
+          );
+          
+          if (!hasData) {
+            // C'est un nouvel utilisateur sans données
+            setIsNewUser(true);
+          }
+          
           setFormData({
             delais_resiliation: response.delais_resiliation || '',
             delais_interruption: response.delais_interruption || '',
@@ -38,7 +50,12 @@ const CGVSettings = () => {
         }
       } catch (err) {
         console.error('Erreur détaillée:', err);
-        setError('Impossible de charger les données des CGV. Veuillez réessayer plus tard.');
+        // Vérifier si c'est une erreur 404 (pas de données) ou une vraie erreur
+        if (err.message && err.message.includes('404')) {
+          setIsNewUser(true);
+        } else {
+          setError('Impossible de charger les données des CGV. Veuillez réessayer plus tard.');
+        }
       } finally {
         setInitialLoading(false);
       }
@@ -74,6 +91,7 @@ const CGVSettings = () => {
     try {
       await cgvService.updateCGVInfo(formData);
       setSuccess(true);
+      setIsNewUser(false); // L'utilisateur n'est plus considéré comme nouveau après avoir soumis des données
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError(`Erreur lors de la sauvegarde des CGV. ${err.message}`);
@@ -93,6 +111,28 @@ const CGVSettings = () => {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Conditions Générales de Vente</h2>
+      
+      {/* Message pour nouvel utilisateur */}
+      {isNewUser && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-md bg-blue-50 dark:bg-blue-900/30 p-4"
+        >
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Bienvenue ! Configurez vos conditions générales de vente ci-dessous pour les utiliser dans vos lettres de mission.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
       
       {/* Message de succès */}
       {success && (

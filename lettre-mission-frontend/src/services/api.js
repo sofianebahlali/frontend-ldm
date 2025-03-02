@@ -144,11 +144,21 @@ export const clientService = {
     console.log('Client data:', clientData);
     
     try {
+      // Utiliser PATCH au lieu de PUT pour les mises à jour partielles
+      // Certains backends API peuvent préférer PATCH pour les mises à jour
       return await fetchWithAuth(`/clients/${clientId}`, {
-        method: 'PUT',
+        method: 'PATCH', // Changé de PUT à PATCH
         body: JSON.stringify(clientData),
       });
     } catch (error) {
+      // Si PATCH échoue, essayons avec PUT
+      if (error.message && error.message.includes('405')) {
+        console.log('PATCH not allowed, trying PUT instead');
+        return await fetchWithAuth(`/clients/${clientId}`, {
+          method: 'PUT',
+          body: JSON.stringify(clientData),
+        });
+      }
       console.error(`Error updating client ${clientId}:`, error);
       throw error;
     }
@@ -202,7 +212,16 @@ export const ldmService = {
 export const cabinetService = {
   // Récupérer les informations du cabinet
   async getCabinetInfo() {
-    return fetchWithAuth('/mon-cabinet');
+    try {
+      return await fetchWithAuth('/mon-cabinet');
+    } catch (err) {
+      // Si nous recevons une erreur 404, c'est probablement parce que l'utilisateur n'a pas encore
+      // configuré son cabinet, donc retournons un objet vide au lieu de propager l'erreur
+      if (err.message && err.message.includes('404')) {
+        return {};
+      }
+      throw err;
+    }
   },
 
   // Mettre à jour les informations du cabinet
@@ -218,7 +237,16 @@ export const cabinetService = {
 export const cgvService = {
   // Récupérer les CGV
   async getCGVInfo() {
-    return fetchWithAuth('/mes-cgv');
+    try {
+      return await fetchWithAuth('/mes-cgv');
+    } catch (err) {
+      // Si nous recevons une erreur 404, c'est probablement parce que l'utilisateur n'a pas encore
+      // configuré ses CGV, donc retournons un objet vide au lieu de propager l'erreur
+      if (err.message && err.message.includes('404')) {
+        return {};
+      }
+      throw err;
+    }
   },
 
   // Mettre à jour les CGV

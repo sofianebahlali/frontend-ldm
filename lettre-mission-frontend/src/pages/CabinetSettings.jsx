@@ -19,8 +19,7 @@ const CabinetSettings = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
-  
-  const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const [isNewUser, setIsNewUser] = useState(false);
   
   // Effet pour charger les données existantes du cabinet
   useEffect(() => {
@@ -29,6 +28,16 @@ const CabinetSettings = () => {
         const response = await cabinetService.getCabinetInfo();
         
         if (response) {
+          // Vérifier si les données sont vides (nouvel utilisateur)
+          const hasData = Object.values(response).some(value => 
+            value !== null && value !== undefined && String(value).trim() !== ''
+          );
+          
+          if (!hasData) {
+            // C'est un nouvel utilisateur sans données
+            setIsNewUser(true);
+          }
+          
           setFormData({
             Denom_socialexpert: response.Denom_socialexpert || '',
             Siret_expert: response.Siret_expert || '',
@@ -42,7 +51,12 @@ const CabinetSettings = () => {
         }
       } catch (err) {
         console.error('Erreur détaillée:', err);
-        setError('Impossible de charger les données du cabinet. Veuillez réessayer plus tard.');
+        // Vérifier si c'est une erreur 404 (pas de données) ou une vraie erreur
+        if (err.message && err.message.includes('404')) {
+          setIsNewUser(true);
+        } else {
+          setError('Impossible de charger les données du cabinet. Veuillez réessayer plus tard.');
+        }
       } finally {
         setInitialLoading(false);
       }
@@ -77,6 +91,7 @@ const CabinetSettings = () => {
     try {
       await cabinetService.updateCabinetInfo(formData);
       setSuccess(true);
+      setIsNewUser(false); // L'utilisateur n'est plus considéré comme nouveau après avoir soumis des données
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err);
       setError(`Erreur lors de la sauvegarde des informations. ${err.message}`);
@@ -96,6 +111,28 @@ const CabinetSettings = () => {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Informations du cabinet</h2>
+      
+      {/* Message pour nouvel utilisateur */}
+      {isNewUser && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-md bg-blue-50 dark:bg-blue-900/30 p-4"
+        >
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Bienvenue ! Configurez les informations de votre cabinet pour les utiliser dans vos lettres de mission.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
       
       {/* Message de succès */}
       {success && (

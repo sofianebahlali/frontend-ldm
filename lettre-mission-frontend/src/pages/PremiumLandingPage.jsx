@@ -50,8 +50,8 @@ const PremiumLandingPage = () => {
           <div className={`absolute bottom-[10%] left-[15%] w-96 h-96 bg-pink-500/20 dark:bg-pink-800/10 rounded-full filter blur-3xl opacity-40 dark:opacity-30 transition-opacity duration-500 animate-blob animation-delay-4000`}></div>
         </div>
 
-        {/* Dot Grid (decorative) */}
-        <div className="fixed inset-0 bg-grid-slate-900/[0.04] dark:bg-grid-slate-100/[0.03] bg-[center_top_-1px] pointer-events-none"></div>
+        {/* Suppression du quadrillage en fond en mode clair */}
+        <div className="fixed inset-0 dark:bg-grid-slate-100/[0.03] bg-[center_top_-1px] pointer-events-none"></div>
 
         {/* Navbar */}
         <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md shadow-sm' : ''}`}>
@@ -212,22 +212,13 @@ const PremiumLandingPage = () => {
             </div>
           </section>
 
-          {/* Clients Section */}
+          {/* Clients Section - Modifiée comme demandé */}
           <section className="py-16 border-t border-b border-gray-200 dark:border-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  ILS NOUS FONT CONFIANCE
+                <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                  Rejoignez les plus de 50 experts comptables qui nous ont déjà choisi  <br />et faites nous confiance à votre tour!
                 </p>
-                <div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-6 lg:grid-cols-5">
-                  {['Deloitte', 'KPMG', 'PWC', 'EY', 'Mazars'].map((company, index) => (
-                    <div key={index} className="col-span-1 flex justify-center items-center md:col-span-2 lg:col-span-1">
-                      <span className="text-xl font-semibold text-gray-400 dark:text-gray-600 hover:text-gray-800 dark:hover:text-gray-400 transition-colors duration-300">
-                        {company}
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           </section>
@@ -279,7 +270,7 @@ const PremiumLandingPage = () => {
             </div>
           </section>
 
-          {/* How it works section */}
+          {/* How it works section - Titre modifié comme demandé */}
           <section className="py-24 bg-gray-50 dark:bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center">
@@ -290,7 +281,7 @@ const PremiumLandingPage = () => {
                   transition={{ duration: 0.5 }}
                   className="text-3xl font-bold sm:text-4xl"
                 >
-                  Comment ça fonctionne
+                  Générez vos lettres de missions en trois étapes clefs
                 </motion.h2>
                 <motion.p
                   initial={{ opacity: 0, y: 20 }}
@@ -299,7 +290,7 @@ const PremiumLandingPage = () => {
                   transition={{ duration: 0.5, delay: 0.1 }}
                   className="mt-4 text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
                 >
-                  Trois étapes simples pour transformer votre processus
+                  Un processus simple et efficace pour optimiser votre travail
                 </motion.p>
               </div>
 
@@ -348,68 +339,7 @@ const PremiumLandingPage = () => {
             </div>
           </section>
 
-          {/* Testimonials
-          <section id="testimonials" className="py-24">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center">
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5 }}
-                  className="text-3xl font-bold sm:text-4xl"
-                >
-                  Ce que nos clients disent
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  className="mt-4 text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
-                >
-                  Des centaines d'experts-comptables nous font confiance
-                </motion.p>
-              </div>
-
-              <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {testimonials.map((testimonial, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                  >
-                    <div className="flex space-x-1 mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 italic mb-6">"{testimonial.text}"</p>
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden">
-                        <img
-                          src={testimonial.avatar}
-                          alt={testimonial.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-semibold">{testimonial.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{testimonial.title}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </section> */}
-
-          {/* Pricing Section */}
+          {/* Pricing Section - Prix modifiés comme demandé */}
           <section id="pricing" className="py-24 bg-gray-50 dark:bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center">
@@ -517,7 +447,7 @@ const PremiumLandingPage = () => {
                   </div>
                 </motion.div>
 
-                {/* Premium Plan */}
+                {/* Premium Plan - Prix modifiés */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -535,7 +465,7 @@ const PremiumLandingPage = () => {
                     </p>
                     <p className="mt-6 flex items-baseline">
                       <span className="text-5xl font-extrabold">
-                        {activeTab === 'monthly' ? '29€' : '290€'}
+                        {activeTab === 'monthly' ? '8,99€' : '80€'}
                       </span>
                       <span className="ml-2 text-gray-300 dark:text-gray-700">
                         / {activeTab === 'monthly' ? 'mois' : 'an'}
@@ -543,7 +473,7 @@ const PremiumLandingPage = () => {
                     </p>
                     {activeTab === 'yearly' && (
                       <p className="mt-2 text-sm text-gray-300 dark:text-gray-700">
-                        Équivalent à 24,17€/mois. Économisez 17% !
+                        Équivalent à 6,67€/mois. Économisez 26% !
                       </p>
                     )}
 
@@ -896,28 +826,6 @@ const howItWorksSteps = [
   }
 ];
 
-// Data for testimonials
-const testimonials = [
-  {
-    text: "LDM a transformé notre façon de travailler. Ce qui nous prenait des heures ne prend plus que quelques minutes. L'interface est intuitive et élégante.",
-    name: "Sophie Martin",
-    title: "Expert-comptable, Cabinet Martin & Associés",
-    avatar: "https://randomuser.me/api/portraits/women/45.jpg"
-  },
-  {
-    text: "Je recommande vivement LDM à tous mes collègues. Le gain de temps est considérable et la qualité des documents produits est irréprochable.",
-    name: "Thomas Dubois",
-    title: "Directeur, Fiduciaire Conseil",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg"
-  },
-  {
-    text: "Le support client est exceptionnel. Chaque fois que j'ai eu besoin d'aide, l'équipe a été réactive et a résolu mes problèmes rapidement.",
-    name: "Julie Lefevre",
-    title: "Comptable indépendante",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg"
-  }
-];
-
 // Data for pricing plans
 const freePlanFeatures = [
   "Jusqu'à 5 clients",
@@ -964,53 +872,5 @@ const faqItems = [
     answer: "Oui, vous pouvez passer de la version gratuite à la version premium à tout moment. Si vous êtes déjà sur la version premium et souhaitez revenir à la version gratuite, ce changement prendra effet à la fin de votre période de facturation actuelle."
   }
 ];
-
-// Styles for animation
-const styleSheet = `
-  @keyframes blob {
-    0% {
-      transform: translate(0px, 0px) scale(1);
-    }
-    33% {
-      transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-20px, 20px) scale(0.9);
-    }
-    100% {
-      transform: translate(0px, 0px) scale(1);
-    }
-  }
-  
-  .animate-blob {
-    animation: blob 7s infinite;
-  }
-  
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-  
-  .animation-delay-4000 {
-    animation-delay: 4s;
-  }
-  
-  .bg-grid-slate-900\/\[0\.04\] {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(15 23 42 / 0.04)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
-  }
-  
-  .bg-grid-slate-100\/\[0\.03\] {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(241 245 249 / 0.03)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
-  }
-`;
-
-// // Add the styles to the document
-// React.useEffect(() => {
-//   const style = document.createElement('style');
-//   style.textContent = styleSheet;
-//   document.head.appendChild(style);
-//   return () => {
-//     document.head.removeChild(style);
-//   };
-// }, []);
 
 export default PremiumLandingPage;

@@ -44,9 +44,9 @@ const UserSettings = () => {
           
           setSubscriptionInfo({
             isActive: userData.is_premium || false,
-            plan: 'Premium',
+            plan: userData.is_premium ? 'Premium' : 'Gratuit',
             renewalDate: userData.subscription_end_date || 'Non disponible',
-            price: '29€/mois'
+            price: userData.is_premium ? '29€/mois' : 'Gratuit'
           });
         }
       } catch (err) {
@@ -369,24 +369,30 @@ const UserSettings = () => {
                 <div className="ml-4">
                   <h4 className="text-base font-medium text-gray-900 dark:text-white">Statut de l'abonnement</h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {subscriptionInfo.isActive ? 'Actif' : 'Inactif'}
+                    {subscriptionInfo.isActive ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Premium
+                      </span>
+                    ) : 'Forfait Gratuit'}
                   </p>
                 </div>
               </div>
               
               <div className="space-y-3 mt-6">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Abonnement</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Plan</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">{subscriptionInfo.plan}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Prix</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">{subscriptionInfo.price}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Prochaine facturation</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{subscriptionInfo.renewalDate}</span>
-                </div>
+                {subscriptionInfo.isActive && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Prochaine facturation</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{subscriptionInfo.renewalDate}</span>
+                  </div>
+                )}
               </div>
             </div>
             
