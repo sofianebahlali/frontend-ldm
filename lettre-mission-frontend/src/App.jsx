@@ -18,6 +18,8 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import UserSettings from './pages/UserSettings';
 import CGVSettings from './pages/CGVSettings';
 import Settings from './pages/Settings';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -59,6 +61,23 @@ const PremiumRoute = ({ children }) => {
   return children;
 };
 
+// Home Page Router component to handle redirection
+const HomeRouter = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="w-12 h-12 border-4 border-black border-t-transparent dark:border-white dark:border-t-transparent rounded-full animate-spin"></div>
+    </div>;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <PremiumLandingPage />;
+};
+
 function App() {
   const [loading, setLoading] = useState(true);
 
@@ -96,12 +115,17 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Marketing/Public Routes - Utilisez PremiumLandingPage en tant que page d'accueil */}
-          <Route path="/" element={<PremiumLandingPage />} />
+          {/* Marketing/Public Routes - Utilisez HomeRouter pour la page d'accueil */}
+          <Route path="/" element={<HomeRouter />} />
           <Route path="/cors-test" element={<CorsTester />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+          {/* Routes de réinitialisation de mot de passe */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          
           <Route path="/success" element={
             <ProtectedRoute>
               <DashboardLayout>
