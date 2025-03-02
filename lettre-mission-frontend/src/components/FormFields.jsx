@@ -14,8 +14,8 @@ export const FormField = ({
   className = ''
 }) => {
   return (
-    <div className={`${className}`}>
-      <label htmlFor={id || name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <div className={`${className} mb-5`}>
+      <label htmlFor={id || name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="mt-1 relative">
@@ -26,10 +26,10 @@ export const FormField = ({
           value={value || ''}
           onChange={onChange}
           placeholder={placeholder}
-          className="shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2.5 px-3 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
+          className="shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3 px-4 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
           required={required}
         />
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
     </div>
   );
@@ -49,8 +49,8 @@ export const SelectField = ({
   emptyOption = 'Sélectionner'
 }) => {
   return (
-    <div className={`${className}`}>
-      <label htmlFor={id || name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <div className={`${className} mb-5`}>
+      <label htmlFor={id || name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="mt-1 relative">
@@ -59,7 +59,7 @@ export const SelectField = ({
           name={name}
           value={value || ''}
           onChange={onChange}
-          className="shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2.5 px-3 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 appearance-none bg-none"
+          className="shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3 px-4 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500 appearance-none bg-none"
           required={required}
         >
           <option value="">{emptyOption}</option>
@@ -69,12 +69,12 @@ export const SelectField = ({
             </option>
           ))}
         </select>
-        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-          <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg className="h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </div>
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
     </div>
   );
@@ -92,20 +92,20 @@ export const CheckboxField = ({
   className = ''
 }) => {
   return (
-    <div className={`${className} flex items-center`}>
+    <div className={`${className} flex items-center mb-5`}>
       <input
         id={id || name}
         name={name}
         type="checkbox"
         checked={checked || false}
         onChange={onChange}
-        className="h-5 w-5 text-black dark:text-white focus:ring-black dark:focus:ring-white border-gray-300 dark:border-gray-600 rounded transition-all duration-200"
+        className="h-6 w-6 text-black dark:text-white focus:ring-black dark:focus:ring-white border-2 border-gray-300 dark:border-gray-600 rounded transition-all duration-200"
         required={required}
       />
-      <label htmlFor={id || name} className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label htmlFor={id || name} className="ml-3 block text-base font-medium text-gray-700 dark:text-gray-300">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 };
@@ -117,15 +117,15 @@ export const TextareaField = ({
   label,
   value,
   onChange,
-  rows = 3,
+  rows = 4,
   required = false,
   error = null,
   placeholder = '',
   className = ''
 }) => {
   return (
-    <div className={`${className}`}>
-      <label htmlFor={id || name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+    <div className={`${className} mb-5`}>
+      <label htmlFor={id || name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div className="mt-1">
@@ -136,10 +136,10 @@ export const TextareaField = ({
           value={value || ''}
           onChange={onChange}
           placeholder={placeholder}
-          className="shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-3 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
+          className="shadow-sm focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full text-base border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-4 transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500"
           required={required}
         />
-        {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       </div>
     </div>
   );
