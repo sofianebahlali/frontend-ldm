@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { FormField, SelectField, CheckboxField } from '../components/FormFields';
 
 const ClientForm = () => {
   const { id } = useParams();
@@ -24,6 +25,9 @@ const ClientForm = () => {
     date_finexercice: "",
     Nom_expertdossier: ""
   });
+
+  // État pour les erreurs de validation spécifiques par champ
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // États pour gérer le chargement et les erreurs
   const [loading, setLoading] = useState(false);
@@ -106,10 +110,61 @@ const ClientForm = () => {
   // Gérer les changements de champs
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
     setFormValues(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Si on change la TVA, on efface l'erreur sur le SIREN
+    if (name === 'Tva_client') {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        if (!checked) {
+          delete newErrors.Siren_client;
+        }
+        return newErrors;
+      });
+    }
+
+    // On efface l'erreur pour le champ en cours d'édition
+    setFieldErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[name];
+      return newErrors;
+    });
+  };
+
+  // Fonction pour valider le formulaire
+  const validateForm = () => {
+    const errors = {};
+
+    // Validation dénomination sociale (obligatoire)
+    if (!formValues.denom_social) {
+      errors.denom_social = "La dénomination sociale est requise";
+    }
+
+    // Validation du SIREN uniquement si TVA cochée
+    if (formValues.Tva_client) {
+      if (!formValues.Siren_client) {
+        errors.Siren_client = "Le SIREN est obligatoire pour les entreprises assujetties à la TVA";
+      } else if (!/^\d{9}$/.test(formValues.Siren_client)) {
+        errors.Siren_client = "Le SIREN doit contenir exactement 9 chiffres";
+      }
+    }
+
+    // Validation des dates
+    if (formValues.date_debutexercice && formValues.date_finexercice) {
+      const dateDebut = new Date(formValues.date_debutexercice);
+      const dateFin = new Date(formValues.date_finexercice);
+      
+      if (dateFin <= dateDebut) {
+        errors.date_finexercice = "La date de fin doit être postérieure à la date de début";
+      }
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Fonction pour procéder à la soumission
@@ -164,6 +219,12 @@ const ClientForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Valider le formulaire
+    if (!validateForm()) {
+      setError('Veuillez corriger les erreurs dans le formulaire');
+      return;
+    }
+
     // Vérifier si des champs essentiels sont vides
     const requiredFields = ['denom_social'];
     const emptyRequiredFields = requiredFields.filter(field => !formValues[field]);
@@ -191,6 +252,24 @@ const ClientForm = () => {
       </div>
     );
   }
+
+  // Options pour les champs select
+  const formeOptions = [
+    { value: 'SARL', label: 'SARL' },
+    { value: 'SAS', label: 'SAS' },
+    { value: 'SASU', label: 'SASU' },
+    { value: 'EURL', label: 'EURL' },
+    { value: 'SA', label: 'SA' },
+    { value: 'SCI', label: 'SCI' },
+    { value: 'EI', label: 'EI' },
+    { value: 'Autre', label: 'Autre' }
+  ];
+
+  const impotOptions = [
+    { value: 'Impôt sur le revenu', label: 'Impôt sur le revenu' },
+    { value: 'Impôt sur les sociétés', label: 'Impôt sur les sociétés' },
+    { value: 'Non soumis à impôt', label: 'Non soumis à impôt' }
+  ];
 
   return (
     <div className="py-6">
@@ -252,131 +331,81 @@ const ClientForm = () => {
             <div>
               <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Informations générales</h3>
               <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-3">
-                  <label htmlFor="denom_social" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Dénomination sociale *
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="denom_social"
-                      id="denom_social"
-                      value={formValues.denom_social}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                      required
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="denom_social"
+                  name="denom_social"
+                  label="Dénomination sociale"
+                  value={formValues.denom_social}
+                  onChange={handleChange}
+                  required
+                  placeholder="Ex: SARL Dupont & Associés"
+                  error={fieldErrors.denom_social}
+                  className="sm:col-span-3"
+                />
                 
-                <div className="sm:col-span-3">
-                  <label htmlFor="Forme_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Forme juridique
-                  </label>
-                  <div className="mt-1">
-                    <select
-                      id="Forme_client"
-                      name="Forme_client"
-                      value={formValues.Forme_client}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    >
-                      <option value="">Sélectionner</option>
-                      <option value="SARL">SARL</option>
-                      <option value="SAS">SAS</option>
-                      <option value="SASU">SASU</option>
-                      <option value="EURL">EURL</option>
-                      <option value="SA">SA</option>
-                      <option value="SCI">SCI</option>
-                      <option value="EI">EI</option>
-                      <option value="Autre">Autre</option>
-                    </select>
-                  </div>
-                </div>
+                <SelectField
+                  id="Forme_client"
+                  name="Forme_client"
+                  label="Forme juridique"
+                  value={formValues.Forme_client}
+                  onChange={handleChange}
+                  options={formeOptions}
+                  emptyOption="Sélectionner"
+                  error={fieldErrors.Forme_client}
+                  className="sm:col-span-3"
+                />
 
-                <div className="sm:col-span-3">
-                  <label htmlFor="Nom_representantclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Représentant(s)
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="Nom_representantclient"
-                      id="Nom_representantclient"
-                      value={formValues.Nom_representantclient}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="Nom_representantclient"
+                  name="Nom_representantclient"
+                  label="Représentant(s)"
+                  value={formValues.Nom_representantclient}
+                  onChange={handleChange}
+                  placeholder="Ex: Jean Dupont"
+                  className="sm:col-span-3"
+                />
+                
+                <SelectField
+                  id="Impot_client"
+                  name="Impot_client"
+                  label="Type d'impôt"
+                  value={formValues.Impot_client}
+                  onChange={handleChange}
+                  options={impotOptions}
+                  emptyOption="Sélectionner"
+                  className="sm:col-span-3"
+                />
 
-                <div className="sm:col-span-3">
-                  <label htmlFor="Impot_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Type d'impôt
-                  </label>
-                  <div className="mt-1">
-                    <select
-                      id="Impot_client"
-                      name="Impot_client"
-                      value={formValues.Impot_client}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    >
-                      <option value="">Sélectionner</option>
-                      <option value="Impôt sur le revenu">Impôt sur le revenu</option>
-                      <option value="Impôt sur les sociétés">Impôt sur les sociétés</option>
-                      <option value="Non soumis à impôt">Non soumis à impôt</option>
-                    </select>
-                  </div>
-                </div>
+                <CheckboxField
+                  id="Tva_client"
+                  name="Tva_client"
+                  label="Assujetti à la TVA"
+                  checked={formValues.Tva_client}
+                  onChange={handleChange}
+                  className="sm:col-span-3 mt-2"
+                />
 
-                <div className="sm:col-span-3">
-                  <label htmlFor="Siren_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    SIREN
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="Siren_client"
-                      id="Siren_client"
-                      value={formValues.Siren_client}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="Siren_client"
+                  name="Siren_client"
+                  label={`SIREN ${formValues.Tva_client ? '*' : ''}`}
+                  value={formValues.Siren_client}
+                  onChange={handleChange}
+                  placeholder="Ex: 123456789"
+                  required={formValues.Tva_client}
+                  error={fieldErrors.Siren_client}
+                  className="sm:col-span-3"
+                />
 
-                <div className="sm:col-span-3">
-                  <div className="flex items-center mt-5">
-                    <input
-                      id="Tva_client"
-                      name="Tva_client"
-                      type="checkbox"
-                      checked={formValues.Tva_client}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-black dark:text-white focus:ring-black dark:focus:ring-white border-gray-300 dark:border-gray-600 rounded"
-                    />
-                    <label htmlFor="Tva_client" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                      Assujetti à la TVA
-                    </label>
-                  </div>
-                </div>
-
-                <div className="sm:col-span-6">
-                  <label htmlFor="Activite_client" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Activité
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="Activite_client"
-                      id="Activite_client"
-                      value={formValues.Activite_client}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="Activite_client"
+                  name="Activite_client"
+                  label="Activité"
+                  value={formValues.Activite_client}
+                  onChange={handleChange}
+                  placeholder="Ex: Commerce de détail"
+                  className="sm:col-span-6"
+                />
               </div>
             </div>
             
@@ -384,53 +413,35 @@ const ClientForm = () => {
             <div className="pt-8">
               <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Adresse de l'établissement</h3>
               <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-6">
-                  <label htmlFor="Adresse_etablissementclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Adresse
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="Adresse_etablissementclient"
-                      id="Adresse_etablissementclient"
-                      value={formValues.Adresse_etablissementclient}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="Adresse_etablissementclient"
+                  name="Adresse_etablissementclient"
+                  label="Adresse"
+                  value={formValues.Adresse_etablissementclient}
+                  onChange={handleChange}
+                  placeholder="Ex: 1 rue de la Paix"
+                  className="sm:col-span-6"
+                />
 
-                <div className="sm:col-span-2">
-                  <label htmlFor="code_postaletablissementclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Code postal
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="code_postaletablissementclient"
-                      id="code_postaletablissementclient"
-                      value={formValues.code_postaletablissementclient}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="code_postaletablissementclient"
+                  name="code_postaletablissementclient"
+                  label="Code postal"
+                  value={formValues.code_postaletablissementclient}
+                  onChange={handleChange}
+                  placeholder="Ex: 75001"
+                  className="sm:col-span-2"
+                />
 
-                <div className="sm:col-span-4">
-                  <label htmlFor="ville_etablissementclient" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Ville
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="ville_etablissementclient"
-                      id="ville_etablissementclient"
-                      value={formValues.ville_etablissementclient}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="ville_etablissementclient"
+                  name="ville_etablissementclient"
+                  label="Ville"
+                  value={formValues.ville_etablissementclient}
+                  onChange={handleChange}
+                  placeholder="Ex: Paris"
+                  className="sm:col-span-4"
+                />
               </div>
             </div>
             
@@ -438,37 +449,26 @@ const ClientForm = () => {
             <div className="pt-8">
               <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Exercice comptable</h3>
               <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-3">
-                  <label htmlFor="date_debutexercice" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Date de début d'exercice
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="date"
-                      name="date_debutexercice"
-                      id="date_debutexercice"
-                      value={formValues.date_debutexercice}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="date_debutexercice"
+                  name="date_debutexercice"
+                  label="Date de début d'exercice"
+                  type="date"
+                  value={formValues.date_debutexercice}
+                  onChange={handleChange}
+                  className="sm:col-span-3"
+                />
 
-                <div className="sm:col-span-3">
-                  <label htmlFor="date_finexercice" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Date de fin d'exercice
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="date"
-                      name="date_finexercice"
-                      id="date_finexercice"
-                      value={formValues.date_finexercice}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="date_finexercice"
+                  name="date_finexercice"
+                  label="Date de fin d'exercice"
+                  type="date"
+                  value={formValues.date_finexercice}
+                  onChange={handleChange}
+                  error={fieldErrors.date_finexercice}
+                  className="sm:col-span-3"
+                />
               </div>
             </div>
             
@@ -476,21 +476,15 @@ const ClientForm = () => {
             <div className="pt-8">
               <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">Informations complémentaires</h3>
               <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                <div className="sm:col-span-6">
-                  <label htmlFor="Nom_expertdossier" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Nom de l'expert en charge du dossier
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="Nom_expertdossier"
-                      id="Nom_expertdossier"
-                      value={formValues.Nom_expertdossier}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  id="Nom_expertdossier"
+                  name="Nom_expertdossier"
+                  label="Nom de l'expert en charge du dossier"
+                  value={formValues.Nom_expertdossier}
+                  onChange={handleChange}
+                  placeholder="Ex: Marie Durand"
+                  className="sm:col-span-6"
+                />
               </div>
             </div>
             
