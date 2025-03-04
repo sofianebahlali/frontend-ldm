@@ -21,6 +21,7 @@ import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ChatbotAdmin from './pages/ChatbotAdmin';
+import PremiumAccountingChatbot from './pages/PremiumAccountingChatbot';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -235,6 +236,17 @@ function App() {
             </ProtectedRoute>
           } />
           
+          {/* Chatbot comptable premium */}
+          <Route path="/premium/expert-comptable" element={
+            <ProtectedRoute>
+              <PremiumRoute>
+                <DashboardLayout>
+                  <PremiumAccountingChatbot />
+                </DashboardLayout>
+              </PremiumRoute>
+            </ProtectedRoute>
+          } />
+
           {/* 404 Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>

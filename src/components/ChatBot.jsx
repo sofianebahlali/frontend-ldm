@@ -12,6 +12,8 @@ const ChatBot = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -28,6 +30,16 @@ const ChatBot = () => {
       }, 300);
     }
   }, [isOpen]);
+
+  // Réinitialiser l'état d'erreur après un certain temps
+  useEffect(() => {
+    if (hasError) {
+      const timer = setTimeout(() => {
+        setHasError(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasError]);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -47,6 +59,7 @@ const ChatBot = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setHasError(false);
     
     try {
       // Envoyer la conversation à l'API
@@ -56,15 +69,31 @@ const ChatBot = () => {
       
       // Ajouter la réponse de l'assistant
       setMessages(prev => [...prev, assistantResponse]);
+      setConnectionAttempts(0); // Réinitialiser les tentatives en cas de succès
     } catch (error) {
       console.error('Erreur lors de l\'envoi du message:', error);
+      
+      // Incrémenter le compteur de tentatives
+      const newAttempts = connectionAttempts + 1;
+      setConnectionAttempts(newAttempts);
+      
+      // Message d'erreur approprié selon le nombre de tentatives
+      let errorMessage = 'Désolé, une erreur est survenue. Je travaille pour résoudre ce problème.';
+      
+      if (newAttempts >= 3) {
+        errorMessage = 'Notre service rencontre actuellement des difficultés techniques. Veuillez réessayer ultérieurement ou contacter notre support.';
+      }
+      
       setMessages(prev => [
         ...prev, 
         { 
           role: 'assistant', 
-          content: 'Désolé, une erreur est survenue. Veuillez réessayer plus tard.' 
+          content: errorMessage,
+          isError: true
         }
       ]);
+      
+      setHasError(true);
     } finally {
       setIsLoading(false);
     }
@@ -104,16 +133,34 @@ const ChatBot = () => {
     }
   };
 
+  // Fonction pour retenter la requête
+  const handleRetry = () => {
+    // Trouver le dernier message utilisateur
+    const lastUserMessageIndex = [...messages].reverse().findIndex(m => m.role === 'user');
+    if (lastUserMessageIndex >= 0) {
+      const messagesCopy = [...messages];
+      // Supprimer le dernier message d'erreur
+      messagesCopy.pop();
+      setMessages(messagesCopy);
+      // Réutiliser le dernier message utilisateur pour une nouvelle tentative
+      const lastUserMessage = messagesCopy[messagesCopy.length - 1];
+      handleSubmit({ preventDefault: () => {}, target: {} });
+    }
+  };
+
   // Animations des bulles de messages
   const messageVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 },
   };
 
-  // Style des bulles en fonction du rôle
-  const getMessageStyle = (role) => {
+  // Style des bulles en fonction du rôle et de l'état d'erreur
+  const getMessageStyle = (role, isError) => {
     if (role === 'user') {
       return 'bg-black dark:bg-white text-white dark:text-black ml-auto';
+    }
+    if (isError) {
+      return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 mr-auto';
     }
     return 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 mr-auto';
   };
@@ -126,7 +173,7 @@ const ChatBot = () => {
         return (
           <motion.div
             key={index}
-            className={`max-w-[85%] rounded-xl px-4 py-2 mb-3 ${getMessageStyle(message.role)}`}
+            className={`max-w-[85%] rounded-xl px-4 py-2 mb-3 ${getMessageStyle(message.role, message.isError)}`}
             initial="hidden"
             animate="visible"
             variants={messageVariants}
@@ -136,8 +183,19 @@ const ChatBot = () => {
               {message.content}
             </div>
             
+            {message.isError && (
+              <div className="mt-2">
+                <button 
+                  onClick={handleRetry}
+                  className="text-xs px-3 py-1 bg-black text-white dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
+            )}
+            
             {/* Boutons de feedback */}
-            {!message.feedbackSent && (
+            {!message.feedbackSent && !message.isError && (
               <div className="flex items-center justify-end mt-2 text-xs text-gray-500 dark:text-gray-400">
                 <span className="mr-2">Cette réponse vous a-t-elle aidé ?</span>
                 <button
@@ -175,16 +233,35 @@ const ChatBot = () => {
       return (
         <motion.div
           key={index}
-          className={`max-w-[85%] rounded-xl px-4 py-2 mb-3 ${getMessageStyle(message.role)}`}
+          className={`max-w-[85%] rounded-xl px-4 py-2 mb-3 ${getMessageStyle(message.role, message.isError)}`}
           initial="hidden"
           animate="visible"
           variants={messageVariants}
           transition={{ duration: 0.3, delay: index * 0.1 }}
         >
           {message.content}
+          
+          {message.isError && (
+            <div className="mt-2">
+              <button 
+                onClick={handleRetry}
+                className="text-xs px-3 py-1 bg-black text-white dark:bg-white dark:text-black rounded-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+              >
+                Réessayer
+              </button>
+            </div>
+          )}
         </motion.div>
       );
     });
+  };
+
+  // Indicateur de statut de connexion
+  const connectionStatusIndicator = () => {
+    if (hasError) {
+      return <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>;
+    }
+    return <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>;
   };
 
   return (
@@ -233,7 +310,7 @@ const ChatBot = () => {
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-black dark:bg-white text-white dark:text-black">
               <div className="flex items-center space-x-2">
                 <span className="font-bold">Assistant LDM</span>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                {connectionStatusIndicator()}
               </div>
               <button 
                 onClick={handleClose}
